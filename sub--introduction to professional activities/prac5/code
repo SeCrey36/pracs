@@ -1,0 +1,360 @@
+"""Backend module of airplane reservation"""
+import sys
+
+
+class Main:
+    """
+    A class to represent a person.
+
+    Attributes
+    ----------
+    airplanes : list
+    airplane : __main__.main_thread.Airplane
+        selected airplane
+
+    Methods
+    -------
+    select_airplane():
+        select airplane for work
+    add_airplane():
+        add airplane object to airplanes list
+    del_airplane():
+        delete selected airplane from airplanes list and update airplane var
+    plane_info():
+        print info about selected airplane
+    booking():
+        create a reservation in selected airplane object
+    del_book():
+        delete a reservation in selected airplane object
+    """
+
+    def __init__(self):
+        self.airplanes = []
+        self.airplane = None
+
+    def select_airplane(self):
+        """
+        Select airplane.
+
+        This function selects an airplane for further operation
+        from the list of airplanes
+
+        Raises:
+            IndexError, ValueError
+
+        Examples:
+            airplanes = [plane1, plane2]
+            airplane = None
+            >>> select_airplane()
+            '0 plane1
+             1 plane2'
+            >>> 'Input number of plane: 0'
+            airplanes = [plane1, plane2]
+            airplane = plane1
+        """
+        try:
+            for i, pl_class in enumerate(self.airplanes):
+                print(i, pl_class.name)
+            self.airplane = self.airplanes[int(input('Input number of plane: '))]
+        except IndexError:
+            print('Index Error / 0 airplanes')
+        except ValueError:
+            print('Input must be int')
+        # TODO: Auto select last created airplane
+
+
+    def add_airplane(self):
+        """
+        Append airplane.
+
+        This function append airplane object in airplanes list.
+
+        Raises:
+            ValueError
+        """
+        airplane = Airplane(input('Input airplane name: '))
+        zone1 = Zone("Economy Class", "Low", int(input('Eco seats: '))*[0],
+                     int(input('Eco price: ')))
+        zone2 = Zone("Business Class", "Medium", int(input('Business seats: '))*[0],
+                     int(input('Business price: ')))
+        zone3 = Zone("First Class", "High", int(input('Elite seats: '))*[0],
+                     int(input('Elite price: ')))
+        airplane.zones = [zone1, zone2, zone3]
+        self.airplanes.append(airplane)
+
+    def del_airplane(self):
+        """
+        Delete airplane.
+
+        This function delete selected airplane
+        from airplanes list and update airplane var.
+
+        Examples:
+            airplanes = [1,2,3]
+            airplane = 2
+            >>> del_airplane()
+            airplanes = [1,3]
+            airplane = None
+        """
+        self.airplanes.remove(self.airplane)
+        self.airplane = None
+
+    def plane_info(self):
+        """
+        Print plane info.
+
+        This function print info about selected airplane.
+
+        Examples:
+            >>> plane_info()
+            '- Zone: Economy Class, Tariff: Low, Price: 10, Available Seats: 10
+            - Zone: Business Class, Tariff: Medium, Price: 10, Available Seats: 10
+            - Zone: First Class, Tariff: High, Price: 10, Available Seats: 10'
+        """
+        if self.airplane is not None:
+            pl_name, zones = self.airplane.plane_info()
+            print(f'Plane name: {pl_name}')
+            for zone in zones:
+                print(zone)
+        else:
+            print('Choose airplane!')
+
+    def booking(self):
+        """
+        Create reservation.
+
+        This function create a reservation in selected airplane object.
+
+        Raises:
+            ValueError
+        """
+        if self.airplane is not None:
+            inp_zone = int(input(f'What zone u want? '
+                                    f'(1 - eco ({self.airplane.zones[0].price}), '
+                                    f'2 - busi ({self.airplane.zones[1].price}), '
+                                    f'3 - elite ({self.airplane.zones[2].price})): '))
+            if inp_zone == 1:
+                print(str(self.airplane.zones[0]))
+                print(self.airplane.reserve_seat(self.airplane.zones[0],
+                int(input('Number of seat: '))))
+            elif inp_zone == 2:
+                print(str(self.airplane.zones[1]))
+                print(self.airplane.reserve_seat(self.airplane.zones[1],
+                int(input('Number of seat: '))))
+            elif inp_zone == 3:
+                print(str(self.airplane.zones[2]))
+                print(self.airplane.reserve_seat(self.airplane.zones[2],
+                int(input('Number of seat: '))))
+            else:
+                print('Incorrect')
+        else:
+            print('Choose airplane!')
+
+
+
+    def del_book(self):
+        """
+        Delete reservation.
+
+        This function delete a reservation in selected airplane object.
+
+        Raises:
+            ValueError
+        """
+        if self.airplane is not None:
+            inp_zone = int(input('What zone u want del? (1 - eco, 2 - busi, 3 - elite): '))
+            if inp_zone == 1:
+                print(self.airplane.del_reserve(self.airplane.zones[0], int(input('What seat?: '))))
+            elif inp_zone == 2:
+                print(self.airplane.del_reserve(self.airplane.zones[1], int(input('What seat?: '))))
+            elif inp_zone == 3:
+                print(self.airplane.del_reserve(self.airplane.zones[2], int(input('What seat?: '))))
+            else:
+                print('Incorrect')
+        else:
+            print('Choose airplane!')
+
+
+class Airplane:
+    """
+    Airplane class.
+
+    Attributes
+    ----------
+    name : str
+    zones : list
+        list with zone objects
+
+    Methods
+    -------
+    plane_info():
+        print info about airplane
+    reserve_seat(zone, seat_number):
+        create a reservation
+    del_reserve(zone, seat_number):
+        delete a reservation
+    """
+    def __init__(self, name):
+        self.name = name
+        self.zones = []
+
+    def plane_info(self):
+        """
+        Return info about airplane.
+
+        This function return info about airplane.
+
+        Returns:
+            Airplane info (name, zones, tariffs, prices)
+        """
+        temp = []
+        for zone in self.zones:
+            temp.append(f"- Zone: {zone.name}, Tariff: {zone.tariff}, Price: {zone.price},"
+                        f" Available Seats: {zone.seats.count(0)}")
+        return self.name, temp
+
+    @staticmethod
+    def reserve_seat(zone, seat_number):
+        """
+        Reserve a seat.
+
+        This function create a reservation.
+
+        Returns:
+            Notification of successful or failed reservation
+
+        Raises:
+            IndexError
+        """
+        try:
+            if zone.seats[seat_number-1] == 0:
+                zone.seats[seat_number-1] = 1
+                return f"Seat {seat_number} in {zone.name} reserved."
+            return f"No available seats in {zone.name}."
+        except IndexError:
+            print('IndexError')
+            return 'Error'
+
+    @staticmethod
+    def del_reserve(zone, seat_number):
+        """
+        Delete reserve of seat.
+
+        This function sdlete a reservation.
+
+        Returns:
+            Notification of successful or failed delete
+
+        Raises:
+            IndexError
+        """
+        try:
+            if zone.seats[seat_number-1] == 1:
+                zone.seats[seat_number-1] = 0
+                return f"Reservation for seat {seat_number} in {zone.name} canceled."
+            return f"No reservation found for seat {seat_number} in {zone.name}."
+        except IndexError:
+            print('IndexError')
+            return 'Error'
+
+
+class Zone:
+    """
+    Zone class.
+
+    Attributes
+    ----------
+    name : str
+    tariff : str
+    price : int
+    seats : int
+
+    Methods
+    -------
+    __str__():
+        return info about zone
+    """
+    def __init__(self, name, tariff, seats, price):
+        self.name = name
+        self.tariff = tariff
+        self.price = price
+        self.seats = seats
+
+
+    def __str__(self):
+        """
+        Info about zone.
+
+        This function return info about zone.
+
+        Returns:
+            info about zone
+        """
+        res = ''
+        for i, el in enumerate(self.seats):
+            if el:
+                res += f'Место № {i+1}, цена - {self.price}, занято \n'
+            else:
+                res += f'Место № {i+1}, цена - {self.price}, свободно \n'
+        return res
+
+
+class Booking:
+    """
+    Booking class.
+
+    Attributes
+    ----------
+    reserved_seats : list
+    """
+    def __init__(self):
+        self.reserved_seats = []
+
+
+def main():
+    '''
+    Main.
+
+    This procedure is for communication with the user
+    and looping the program.
+
+    Raises:
+        ValueError
+    '''
+    print('Hello! Its my 6rd practical. '
+          'In this program u can reserve seats in airplane')
+    main_thread = Main()
+
+    actions = {
+        1: main_thread.add_airplane,
+        2: main_thread.plane_info,
+        3: main_thread.booking,
+        4: main_thread.del_book,
+        5: main_thread.select_airplane,
+        6: main_thread.del_airplane,
+        7: sys.exit
+        }
+
+    while True:
+        try:
+            com = int(input('''
+Commands:
+    1 - add airplane
+    2 - print airplane info
+    3 - reserve seat
+    4 - del reserve
+    5 - select airplane
+    6 - delete airplane
+    7 - quit
+        '''))
+            if com in [1, 2, 3, 4, 5, 6, 7]:
+                actions[com]()
+            else:
+                print('Incorrect com / '
+                    'Not selected airplanes / '
+                    '0 airplanes')
+        except ValueError:
+            print('ValueError')
+
+if __name__ == '__main__':
+    main()
